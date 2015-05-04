@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Piglogs>
+	<Piglog>
+    	<Event>access</Event>
+	  	<Onoff>1</Onoff><!--1=On,0=off-->
+		<Level>1</Level><!--1=trace,2=debug,3=info,4=warn,5=error-->
+		<Console>0</Console><!--1 will print on std,defalut 0-->
+	  	<Path>D:\logs\</Path>
+	  	<Split>
+			<Bytime>D</Bytime>
+			<Bysize>1</Bysize>
+	  	</Split>
+	</Piglog>	 
+</Piglogs>
