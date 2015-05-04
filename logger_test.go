@@ -1,7 +1,7 @@
 // logger_test
 package piglog
 
-import ( 
+import (
 	"testing"
 )
 

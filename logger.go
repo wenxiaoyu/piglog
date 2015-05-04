@@ -77,7 +77,6 @@ func (logger *Logger) Warnf(event string, log string, v ...interface{}) error {
 	return logger.log(Warn, event, log)
 }
 
-
 func (logger *Logger) Error(event string, log string) error {
 	return logger.log(Error, event, log)
 }
@@ -181,7 +180,7 @@ func (logger *Logger) getWriteFile() (*os.File, error) {
 	}
 
 	newpath := cfg.Path + cfg.Event + string(os.PathSeparator) + newLogName
-    f.Close()
+	f.Close()
 	reerr := os.Rename(fstr, newpath)
 
 	if reerr == nil {
