@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+//define error
 var (
 	getConfigError   = errors.New("get the log config fail.")
 	nonLogLevelError = errors.New("no define this log level.")
@@ -22,7 +23,7 @@ var Log Logger
 type Logger struct {
 	config PigLogConfig
 }
-
+//define the log interface
 type LoggerInterface interface {
 	Trace(event string, log string) error
 	Debug(event string, log string) error
@@ -85,7 +86,7 @@ func (logger *Logger) Errorf(event string, log string, v ...interface{}) error {
 	log = fmt.Sprintf(log, v)
 	return logger.log(Error, event, log)
 }
-
+//log the log,switch different conditions
 func (logger *Logger) log(leve LogLeve, event string, log string) error {
 	config, ok := GetOneConfig(event)
 	if !ok {
@@ -96,15 +97,15 @@ func (logger *Logger) log(leve LogLeve, event string, log string) error {
 
 	switch leve {
 	case Trace:
-		log = "Trace->" + tstr + log
+		log ="["+tstr+"]"+"["+event+"]"+"Trace->" +  log
 	case Debug:
-		log = "Debug->" + tstr + log
+		log = "["+tstr+"]"+"["+event+"]"+"Debug->" +  log
 	case Info:
-		log = "Info->" + tstr + log
+		log = "["+tstr+"]"+"["+event+"]"+"Info->" +  log
 	case Warn:
-		log = "Warn->" + tstr + log
+		log = "["+tstr+"]"+"["+event+"]"+"Warn->" +  log
 	case Error:
-		log = "Error->" + tstr + log
+		log = "["+tstr+"]"+"["+event+"]"+"Error->" +  log
 	default:
 		fmt.Println(log)
 	}
@@ -113,7 +114,7 @@ func (logger *Logger) log(leve LogLeve, event string, log string) error {
 	}
 	return logger.WriteLog(log + "\n")
 }
-
+//writ log to file
 func (logger *Logger) WriteLog(blog string) error {
 	mutex := &sync.Mutex{}
 	mutex.Lock()
@@ -127,6 +128,7 @@ func (logger *Logger) WriteLog(blog string) error {
 	return err1
 }
 
+//get the current file for log write
 func (logger *Logger) getWriteFile() (*os.File, error) {
 
 	cfg := logger.config
@@ -191,6 +193,7 @@ func (logger *Logger) getWriteFile() (*os.File, error) {
 	return f, err
 
 }
+//get the max num of log file
 func getMaxSpliNum(dir string, filter string) int {
 	files, err := io.ReadDir(dir)
 	if err != nil {
@@ -212,6 +215,7 @@ func getMaxSpliNum(dir string, filter string) int {
 	}
 	return maxNum + 1
 }
+//the log time
 func logtime() string {
 	tt := time.Now()
 	y := strconv.Itoa(int(tt.Year()))
@@ -223,6 +227,6 @@ func logtime() string {
 
 	ms := strconv.Itoa(int(tt.Nanosecond() / 1e6))
 
-	tstr := "[" + y + "/" + M + "/" + d + " " + h + ":" + m + ":" + s + "." + ms + "]"
+	tstr :=  y + "/" + M + "/" + d + " " + h + ":" + m + ":" + s + "." + ms 
 	return tstr
 }

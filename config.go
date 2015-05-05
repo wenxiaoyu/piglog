@@ -14,9 +14,12 @@ package piglog
 
 import (
 	xml "encoding/xml"
-
 	io "io/ioutil"
 	"os"
+	exec "os/exec"
+	filepath "path/filepath"
+	"strings"
+	 
 )
 
 var configFileName = "piglog.xml"
@@ -59,8 +62,7 @@ func init() {
 
 //load an xml of log config
 func loadConfig() (err error) {
-
-	file, err := os.Open(configFileName)
+ 	file, err := os.Open(configFileName)
 
 	if err == nil {
 		b, e := io.ReadAll(file)
@@ -89,4 +91,11 @@ func ReplaceConfig(configfile string) error {
 func GetOneConfig(event string) (PigLogConfig, bool) {
 	plog, ok := configmap[event]
 	return plog, ok
+}
+func GetCurrentPath() string {
+	file, _ := exec.LookPath(os.Args[0])
+	path, _ := filepath.Abs(file)
+	index := strings.LastIndex(path, string(os.PathSeparator))
+	ret := path[:index]
+	return ret
 }

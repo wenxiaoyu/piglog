@@ -18,6 +18,17 @@ func TestLog(t *testing.T) {
 	err = Log.Warnf("access", "test access log by format %d", 3)
 	err = Log.Errorf("access", "test access log by format %d", 3)
 
+	err = Log.Debug("stat", "out put my stat log .带中文.")
+	err = Log.Trace("stat", "out put my stat log -->")
+	err = Log.Info("stat", "out put my stat log -->")
+	err = Log.Warn("stat", "out put my stat log -->")
+	err = Log.Error("stat", "out put my stat log -->")
+
+	err = Log.Tracef("stat", "test stat log by format %d", 3)
+	err = Log.Debugf("stat", "test stat log by format %d", 3)
+	err = Log.Infof("stat", "test stat log by format %d", 3)
+	err = Log.Warnf("stat", "test stat log by format %d", 3)
+	err = Log.Errorf("stat", "test stat log by format %d", 3)
 	if err != nil {
 		t.Fatal(err)
 	}
