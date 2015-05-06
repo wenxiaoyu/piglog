@@ -20,6 +20,12 @@
 	  	<Split>
 			<Bytime>D</Bytime>
 			<Bysize>1</Bysize>
-	  	</Split>
-	</Piglog>	 
+	  	</Split>		
+	</Piglog>	
+	<Remote><!--if config,then can receive log from client by http-->
+			<Ip>127.0.0.1</Ip>
+			<Port>8080</Port>			
+			<SecretKey>12345678</SecretKey>
+	</Remote>
+	
 </Piglogs>
