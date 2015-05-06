@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 	io "io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"crypto/md5"
+	"encoding/hex"
 )
 
 //define error
@@ -23,6 +27,7 @@ var Log Logger
 type Logger struct {
 	config PigLogConfig
 }
+
 //define the log interface
 type LoggerInterface interface {
 	Trace(event string, log string) error
@@ -86,6 +91,7 @@ func (logger *Logger) Errorf(event string, log string, v ...interface{}) error {
 	log = fmt.Sprintf(log, v)
 	return logger.log(Error, event, log)
 }
+
 //log the log,switch different conditions
 func (logger *Logger) log(leve LogLeve, event string, log string) error {
 	config, ok := GetOneConfig(event)
@@ -97,23 +103,25 @@ func (logger *Logger) log(leve LogLeve, event string, log string) error {
 
 	switch leve {
 	case Trace:
-		log ="["+tstr+"]"+"["+event+"]"+"Trace->" +  log
+		log = "[" + tstr + "]" + "[" + event + "]" + "Trace->" + log
 	case Debug:
-		log = "["+tstr+"]"+"["+event+"]"+"Debug->" +  log
+		log = "[" + tstr + "]" + "[" + event + "]" + "Debug->" + log
 	case Info:
-		log = "["+tstr+"]"+"["+event+"]"+"Info->" +  log
+		log = "[" + tstr + "]" + "[" + event + "]" + "Info->" + log
 	case Warn:
-		log = "["+tstr+"]"+"["+event+"]"+"Warn->" +  log
+		log = "[" + tstr + "]" + "[" + event + "]" + "Warn->" + log
 	case Error:
-		log = "["+tstr+"]"+"["+event+"]"+"Error->" +  log
+		log = "[" + tstr + "]" + "[" + event + "]" + "Error->" + log
 	default:
 		fmt.Println(log)
 	}
 	if config.Console == 1 {
 		fmt.Println(log)
 	}
-	return logger.WriteLog(log + "\n")
+	return  logger.WriteLog(log + "\n")
+	//return nil
 }
+
 //writ log to file
 func (logger *Logger) WriteLog(blog string) error {
 	mutex := &sync.Mutex{}
@@ -193,6 +201,20 @@ func (logger *Logger) getWriteFile() (*os.File, error) {
 	return f, err
 
 }
+
+func (logger *Logger) StartHttpServer(remote RemoteConfig) {
+	http.HandleFunc("/log", httpLogServer)
+	iport := remote.Ip + ":" + strconv.Itoa(remote.Port)
+	err := http.ListenAndServe(iport, nil)
+
+	if err != nil {
+		fmt.Errorf("ListenAndServe:", err)
+	} else {
+		fmt.Println("piglog server started.")
+	}
+
+}
+
 //get the max num of log file
 func getMaxSpliNum(dir string, filter string) int {
 	files, err := io.ReadDir(dir)
@@ -215,6 +237,7 @@ func getMaxSpliNum(dir string, filter string) int {
 	}
 	return maxNum + 1
 }
+
 //the log time
 func logtime() string {
 	tt := time.Now()
@@ -227,6 +250,48 @@ func logtime() string {
 
 	ms := strconv.Itoa(int(tt.Nanosecond() / 1e6))
 
-	tstr :=  y + "/" + M + "/" + d + " " + h + ":" + m + ":" + s + "." + ms 
+	tstr := y + "/" + M + "/" + d + " " + h + ":" + m + ":" + s + "." + ms
 	return tstr
+}
+
+// handler log server.
+func httpLogServer(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	event := req.FormValue("event")
+	log := req.FormValue("log")
+	clientSign := req.FormValue("sign")
+	logtype := req.FormValue("type")
+	if event == "" || log == "" || clientSign == "" {
+		rw.Write([]byte("params losed."))
+	}
+	if validateSign(event, log, clientSign) {
+		switch logtype {
+		case "trace":
+			Log.Trace(event, log)
+		case "debug":
+			Log.Debug(event, log)
+		case "info":
+			Log.Info(event, log)
+		case "warn":
+			Log.Warn(event, log)
+		case "error":
+			Log.Error(event, log)
+		}
+		rw.Write([]byte("ok"))
+	} else {
+		rw.Write([]byte("sign error."))
+	}
+}
+
+//validate the sign,signed by event log params
+func validateSign(event string, log string, clientSign string) bool {
+	configSecretkey := LogConfig.Remote.SecretKey
+	hasher := md5.New()
+	hasher.Write([]byte(event + log + configSecretkey))
+	computerSign := hex.EncodeToString(hasher.Sum(nil))
+
+	if computerSign == clientSign {
+		return true
+	}
+	return false
 }

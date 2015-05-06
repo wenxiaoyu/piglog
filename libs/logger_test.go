@@ -3,6 +3,7 @@ package piglog
 
 import (
 	"testing"
+	"time"
 )
 
 func TestLog(t *testing.T) {
@@ -32,6 +33,7 @@ func TestLog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	time.Sleep(1 * time.Millisecond)
 }
 
 func BenchmarkLog(b *testing.B) {

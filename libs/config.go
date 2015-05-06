@@ -13,16 +13,14 @@
 package piglog
 
 import (
-	md5 "crypto/md5"
-	hex "encoding/hex"
 	xml "encoding/xml"
-	"fmt"
+
 	io "io/ioutil"
-	http "net/http"
+
 	"os"
 	exec "os/exec"
 	filepath "path/filepath"
-	"strconv"
+
 	"strings"
 )
 
@@ -63,7 +61,7 @@ type RemoteConfig struct {
 }
 
 var configmap = make(map[string]PigLogConfig)
-var config Config
+var LogConfig Config
 
 func init() {
 	err := loadConfig()
@@ -80,15 +78,11 @@ func loadConfig() (err error) {
 		b, e := io.ReadAll(file)
 
 		if e == nil {
-			xml.Unmarshal(b, &config)
-			for _, plog := range config.Piglog {
+			xml.Unmarshal(b, &LogConfig)
+			for _, plog := range LogConfig.Piglog {
 				configmap[plog.Event] = plog
 			}
-			if config.Remote.Ip != "" && config.Remote.Port > 0 {
-				fmt.Print("start http service : ")
-				fmt.Println(config.Remote)
-				startHttpServer(config.Remote)
-			}
+
 		} else {
 			return e
 		}
@@ -114,59 +108,4 @@ func GetCurrentPath() string {
 	index := strings.LastIndex(path, string(os.PathSeparator))
 	ret := path[:index]
 	return ret
-}
-
-func startHttpServer(remote RemoteConfig) {
-	http.HandleFunc("/log", httpLogServer)
-	iport := remote.Ip + ":" + strconv.Itoa(remote.Port)
-	err := http.ListenAndServe(iport, nil)
-    
-	if err != nil {
-		fmt.Errorf("ListenAndServe:", err)
-	}else{
-		fmt.Println("piglog server started.")
-	}
-	
-}
-
-// handler log server.
-func httpLogServer(rw http.ResponseWriter, req *http.Request) {
-	rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	event := req.FormValue("event")
-	log := req.FormValue("log")
-	clientSign := req.FormValue("sign")
-	logtype := req.FormValue("type")
-	if event == "" || log == "" || clientSign == "" {
-		rw.Write([]byte("params losed."))
-	}
-	if validateSign(event, log, clientSign) {
-		switch logtype {
-		case "trace":
-			Log.Trace(event, log)
-		case "debug":
-			Log.Debug(event, log)
-		case "info":
-			Log.Info(event, log)
-		case "warn":
-			Log.Warn(event, log)
-		case "error":
-			Log.Error(event, log)
-		}
-		rw.Write([]byte("ok"))
-	} else {
-		rw.Write([]byte("sign error."))
-	}
-}
-
-//validate the sign,signed by event log params
-func validateSign(event string, log string, clientSign string) bool {
-	configSecretkey := config.Remote.SecretKey
-	hasher := md5.New()
-	hasher.Write([]byte(event + log + configSecretkey))
-	computerSign := hex.EncodeToString(hasher.Sum(nil))
-   
-	if computerSign == clientSign{
-		return true
-	}
-	return false
 }
