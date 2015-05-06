@@ -120,10 +120,13 @@ func startHttpServer(remote RemoteConfig) {
 	http.HandleFunc("/log", httpLogServer)
 	iport := remote.Ip + ":" + strconv.Itoa(remote.Port)
 	err := http.ListenAndServe(iport, nil)
-
+    
 	if err != nil {
 		fmt.Errorf("ListenAndServe:", err)
+	}else{
+		fmt.Println("piglog server started.")
 	}
+	
 }
 
 // handler log server.
